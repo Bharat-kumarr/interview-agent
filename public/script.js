@@ -3,7 +3,12 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-const VERCEL_URL = "https://<YOUR-VERCEL-PROJECT>.vercel.app/api"; // <- REPLACE with your deployed vercel url
+const VERCEL_URL = "https://interview-agent-inky.vercel.app/api"; // <--- FIXED URL
+
+function getVercelApiBase() {
+  return VERCEL_URL.replace(/\/+$/, '');
+}
+const API_BASE = getVercelApiBase();
 
 const startBtn = document.getElementById('startBtn');
 const sendBtn  = document.getElementById('sendBtn');
@@ -35,7 +40,6 @@ function appendMessage(text, who='bot') {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// save profile to Firestore
 async function saveProfileToFirestore(uid, profile) {
   try {
     await setDoc(doc(db, "users", uid, "profile", "current"), {
@@ -45,9 +49,8 @@ async function saveProfileToFirestore(uid, profile) {
   } catch (e) { console.error("saveProfile error", e); }
 }
 
-// call Vercel createSession endpoint
 async function createSession(profile) {
-  const res = await fetch(`${VERCEL_URL}/createSession`, {
+  const res = await fetch(`${API_BASE}/createSession`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ profile })
@@ -55,9 +58,8 @@ async function createSession(profile) {
   return res.json();
 }
 
-// call Vercel ask endpoint
 async function askBackend(payload) {
-  const res = await fetch(`${VERCEL_URL}/ask`, {
+  const res = await fetch(`${API_BASE}/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -104,7 +106,6 @@ sendBtn.addEventListener('click', async () => {
   }
 });
 
-// STT start/stop
 document.getElementById('startMic').addEventListener('click', () => {
   if (!SR) return alert('SpeechRecognition not supported (use Chrome)');
   if (recognition) recognition.stop();
@@ -116,5 +117,4 @@ document.getElementById('startMic').addEventListener('click', () => {
 });
 document.getElementById('stopMic').addEventListener('click', () => { if (recognition) recognition.stop(); recognition = null; });
 
-// sign out
 signoutBtn.addEventListener('click', async ()=>{ await signOut(auth); window.location.href='login.html'; });
